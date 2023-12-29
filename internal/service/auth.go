@@ -23,7 +23,7 @@ type UserSaver interface {
 
 type UserProvider interface {
 	User(ctx context.Context, login string) (models.User, error)
-	IsAdmin(ctx context.Context, userID int64) (bool, error)
+	IsAdmin(ctx context.Context, userID int32) (bool, error)
 }
 
 type AppProvide interface {
@@ -113,10 +113,10 @@ func (s *Auth) RegisterNewUser(ctx context.Context, login string, password strin
 	return uid, nil
 }
 
-func (s *Auth) CheckIsAdmin(ctx context.Context, userid int64) (bool, error) {
+func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32) (bool, error) {
 	const op = "auth.checkIsAdmin"
 
-	log := s.log.With(slog.String("op", op), slog.Int64("userid", userid))
+	log := s.log.With(slog.String("op", op), slog.Int64("userid", int64(userid)))
 
 	ch, err := s.usrProvider.IsAdmin(ctx, userid)
 	if err != nil {

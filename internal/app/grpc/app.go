@@ -4,13 +4,15 @@ import (
 	"fmt"
 	serverAPI "github.com/MorZLE/auth/internal/grpc/auth"
 	"google.golang.org/grpc"
+
 	"log/slog"
 	"net"
 )
 
-func NewApp(log *slog.Logger, port int) *App {
+func NewApp(log *slog.Logger, port int, authservice serverAPI.Auth) *App {
 	grpcServer := grpc.NewServer()
-	serverAPI.RegisterServerAPI(grpcServer)
+
+	serverAPI.RegisterServerAPI(grpcServer, authservice)
 
 	return &App{
 		log:        log,
