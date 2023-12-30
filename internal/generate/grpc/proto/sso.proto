@@ -9,7 +9,44 @@ service Auth{
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc Login (LoginRequest) returns (LoginResponse);
   rpc IsAdmin (IsAdminRequest) returns (IsAdminResponse);
+
+  rpc CreateAdmin (CreateAdminRequest) returns (CreateAdminResponse);
+  rpc DeleteAdmin (DeleteAdminRequest) returns (DeleteAdminResponse);
+  rpc AddApp (AddAppRequest) returns (AddAppResponse);
 }
+
+message CreateAdminRequest{
+  string login = 1;
+  int32 lvl = 2;
+  string key = 3;
+}
+
+message CreateAdminResponse{
+  int64 user_id = 1;
+}
+
+message DeleteAdminRequest{
+  int64 user_id = 1;
+  string login = 2;
+  string key = 3;
+}
+
+message DeleteAdminResponse{
+  int64 user_id = 1;
+}
+
+message AddAppRequest{
+  string name = 1;
+  string secret = 2;
+  string key = 3;
+}
+
+message AddAppResponse{
+  int32 app_id = 1;
+}
+
+
+
 
 message RegisterResponse{
   int64 user_id = 1;    // возвращает id авторизованного пользователя
@@ -18,6 +55,7 @@ message RegisterResponse{
 message RegisterRequest{
   string login = 1;  // логин
   string password = 2; // пароль
+  int32 app_id = 3; // id приложения
 }
 
 message LoginRequest{

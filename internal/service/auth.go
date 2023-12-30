@@ -18,7 +18,7 @@ var (
 )
 
 type UserSaver interface {
-	SaveUser(ctx context.Context, login string, pswdHash []byte) (uid int64, err error)
+	SaveUser(ctx context.Context, login string, pswdHash []byte, appid int32) (uid int64, err error)
 }
 
 type UserProvider interface {
@@ -89,7 +89,7 @@ func (s *Auth) LoginUser(ctx context.Context, login string, password string, app
 	return token, nil
 }
 
-func (s *Auth) RegisterNewUser(ctx context.Context, login string, password string) (userid int64, err error) {
+func (s *Auth) RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error) {
 	const op = "Auth.RegisterNewUser"
 
 	log := s.log.With(slog.String("op", op), slog.String("login", login))
@@ -100,7 +100,7 @@ func (s *Auth) RegisterNewUser(ctx context.Context, login string, password strin
 		return 0, fmt.Errorf("failed generate passhash %s: %w", op, err)
 	}
 
-	uid, err := s.usrSaver.SaveUser(ctx, login, passhash)
+	uid, err := s.usrSaver.SaveUser(ctx, login, passhash, appid)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Error("user exists", slog.String("err", err.Error()))
