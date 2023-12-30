@@ -115,3 +115,34 @@ func (s *Storage) App(ctx context.Context, appID int32) (models.App, error) {
 	}
 	return res, nil
 }
+
+func (s *Storage) CreateAdmin(ctx context.Context, login string, lvl int32) (uid int64, err error) {
+
+	return 0, err
+}
+func (s *Storage) DeleteAdmin(ctx context.Context, login string) (uid int64, err error) {
+	return 0, err
+}
+func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error) {
+	const op = "storage.AddApp"
+
+	query := "INSERT INTO apps (name,secret) VALUES(?,?)"
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+
+	}
+	res, err := stmt.ExecContext(ctx, name, secret)
+	if err != nil {
+		var errSql sqlite3.Error
+		if errors.As(err, &errSql) && errSql.ExtendedCode == sql.ErrNoRows {
+			return 0, storage.ErrAppExists
+		}
+		return 0, err
+	}
+	uid, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int32(uid), nil
+}

@@ -26,9 +26,8 @@ message CreateAdminResponse{
 }
 
 message DeleteAdminRequest{
-  int64 user_id = 1;
-  string login = 2;
-  string key = 3;
+  string login = 1;
+  string key = 2;
 }
 
 message DeleteAdminResponse{
@@ -74,4 +73,5 @@ message IsAdminRequest{
 
 message IsAdminResponse{
   bool is_admin = 1;
+  int32 lvl = 2;
 }

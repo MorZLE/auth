@@ -10,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+// go run .\cmd\migrator\main.go --storage-path=storage/auth.db --migrator-path=migrations
 func main() {
 	var storagePath, migratorPath, migratorTable string
 

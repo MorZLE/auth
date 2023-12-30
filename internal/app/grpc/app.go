@@ -9,10 +9,10 @@ import (
 	"net"
 )
 
-func NewApp(log *slog.Logger, port int, authservice serverAPI.Auth) *App {
+func NewApp(log *slog.Logger, port int, authservice serverAPI.Auth, authAdmin serverAPI.AuthAdmin) *App {
 	grpcServer := grpc.NewServer()
 
-	serverAPI.RegisterServerAPI(grpcServer, authservice)
+	serverAPI.RegisterServerAPI(grpcServer, authservice, authAdmin)
 
 	return &App{
 		log:        log,

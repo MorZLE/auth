@@ -14,8 +14,8 @@ func NewApp(log *slog.Logger, port int, strPath string, ttl time.Duration) *App 
 	if err != nil {
 		panic(err)
 	}
-	authservice := service.NewAuth(log, storage, storage, storage, ttl)
-	grpcApp := grpcserver.NewApp(log, port, authservice)
+	authservice := service.NewAuth(log, storage, storage, storage, storage, ttl)
+	grpcApp := grpcserver.NewApp(log, port, authservice, authservice)
 
 	return &App{
 		GRPCSrv: grpcApp,
