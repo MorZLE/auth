@@ -24,13 +24,9 @@ type Storage struct {
 	db *sql.DB
 }
 
-type UserSaver struct{}
-type UserProvider struct{}
-type AppProvide struct{}
-
-func (s *Storage) SaveUser(ctx context.Context, login string, pswdHash []byte) (uid int64, err error) {
+func (s *Storage) SaveUser(ctx context.Context, login string, pswdHash []byte, appid int32) (uid int64, err error) {
 	const op = "sqlite.SaveUser"
-	query := "INSERT INTO users (login, password) VALUES (?, ?)"
+	query := "INSERT INTO users (login, passHash) VALUES (?, ?)"
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
@@ -70,6 +66,7 @@ func (s *Storage) User(ctx context.Context, login string) (models.User, error) {
 		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows {
 			return user, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
+
 		return user, fmt.Errorf("%s: %w", op, err)
 	}
 	return user, nil
@@ -107,7 +104,7 @@ func (s *Storage) App(ctx context.Context, appID int32) (models.App, error) {
 		return res, fmt.Errorf("%s: %w ", op, err)
 	}
 
-	row := stmt.QueryRowContext(ctx)
+	row := stmt.QueryRowContext(ctx, appID)
 	err = row.Scan(&res.ID, &res.Name, &res.Secret)
 	if err != nil {
 		var sqlErr sqlite3.Error

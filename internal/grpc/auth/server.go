@@ -17,7 +17,7 @@ const (
 
 type Auth interface {
 	LoginUser(ctx context.Context, login string, password string, appID int32) (token string, err error)
-	RegisterNewUser(ctx context.Context, login string, password string) (userid int64, err error)
+	RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error)
 	CheckIsAdmin(ctx context.Context, userid int32) (bool, error)
 }
 
@@ -53,15 +53,16 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
 	login := req.GetLogin()
 	pswrd := req.GetPassword()
+	appid := req.GetAppId()
 
-	if login == "" || pswrd == "" {
+	if login == "" || pswrd == "" || appid == 0 {
 		return nil, status.Error(codes.InvalidArgument, "data not exist")
 	}
 
-	userID, err := s.auth.RegisterNewUser(ctx, login, pswrd)
+	userID, err := s.auth.RegisterNewUser(ctx, login, pswrd, appid)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExists) {
-			return nil, status.Error(codes.AlreadyExists, "internal error")
+		if errors.Is(err, service.ErrUserExists) {
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
