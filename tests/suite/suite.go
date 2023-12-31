@@ -37,7 +37,7 @@ func NewSuite(t *testing.T) (context.Context, *Suite) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
-		t.Fatalf("grpc server connection failed: %v", err)
+		t.Fatalf("controller server connection failed: %v", err)
 	}
 
 	return ctx, &Suite{

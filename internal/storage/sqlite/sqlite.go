@@ -26,13 +26,13 @@ type Storage struct {
 
 func (s *Storage) SaveUser(ctx context.Context, login string, pswdHash []byte, appid int32) (uid int64, err error) {
 	const op = "sqlite.SaveUser"
-	query := "INSERT INTO users (login, passHash) VALUES (?, ?)"
+	query := "INSERT INTO users (login, passHash,app_id) VALUES (?, ?, ?)"
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
-	res, err := stmt.ExecContext(ctx, login, pswdHash)
+	res, err := stmt.ExecContext(ctx, login, pswdHash, appid)
 	if err != nil {
 		var sqlErr sqlite3.Error
 		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sqlite3.ErrConstraintUnique {
@@ -49,17 +49,17 @@ func (s *Storage) SaveUser(ctx context.Context, login string, pswdHash []byte, a
 	return id, nil
 }
 
-func (s *Storage) User(ctx context.Context, login string) (models.User, error) {
+func (s *Storage) User(ctx context.Context, login string, appid int32) (models.User, error) {
 	var user models.User
 	const op = "sqlite.User"
-	query := "SELECT id, login,passHash FROM users WHERE login = ?"
+	query := "SELECT id, login,passHash FROM users WHERE login = ? and app_id = ?"
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
 		return user, fmt.Errorf("%s: %w", op, err)
 	}
 
-	res := stmt.QueryRowContext(ctx, login)
+	res := stmt.QueryRowContext(ctx, login, appid)
 	err = res.Scan(&user.ID, &user.Login, &user.PassHash)
 	if err != nil {
 		var sqlErr sqlite3.Error
@@ -72,23 +72,23 @@ func (s *Storage) User(ctx context.Context, login string) (models.User, error) {
 	return user, nil
 }
 
-func (s *Storage) IsAdmin(ctx context.Context, userID int32) (bool, error) {
-	var res bool
+func (s *Storage) IsAdmin(ctx context.Context, userID int32, appID int32) (models.Admin, error) {
+	var res models.Admin
 	const op = "sqlite.IsAdmin"
-	query := "SELECT isadmin FROM users WHERE id = ?"
+	query := "SELECT id,user_id,lvl,app_id FROM admins WHERE user_id = ? and app_id = ?"
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
-		return false, fmt.Errorf("%s: %w ", op, err)
+		return res, fmt.Errorf("%s: %w ", op, err)
 	}
-	row := stmt.QueryRowContext(ctx, userID)
+	row := stmt.QueryRowContext(ctx, userID, appID)
 
-	err = row.Scan(&res)
+	err = row.Scan(&res.Id, &res.UserID, &res.Lvl, &res.AppID)
 	if err != nil {
 		var sqlErr sqlite3.Error
 		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows {
-			return false, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+			return res, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
-		return false, fmt.Errorf("%s: %w ", op, err)
+		return res, fmt.Errorf("%s: %w ", op, err)
 	}
 
 	return res, nil
@@ -116,12 +116,44 @@ func (s *Storage) App(ctx context.Context, appID int32) (models.App, error) {
 	return res, nil
 }
 
-func (s *Storage) CreateAdmin(ctx context.Context, login string, lvl int32) (uid int64, err error) {
+func (s *Storage) CreateAdmin(ctx context.Context, login string, lvl int32, appID int32) (uid int64, err error) {
+	const op = "storage.CreateAdmin"
+	query := "INSERT INTO admins (user_id, lvl, app_id) SELECT id, ?, ? FROM users WHERE login = ?"
 
-	return 0, err
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w ", op, err)
+	}
+
+	res, err := stmt.ExecContext(ctx, lvl, appID, login)
+	if err != nil {
+		var sqlErr sqlite3.Error
+		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
+		return 0, fmt.Errorf("%s: %w ", op, err)
+	}
+
+	uid, err = res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w ", op, err)
+	}
+	return uid, nil
 }
-func (s *Storage) DeleteAdmin(ctx context.Context, login string) (uid int64, err error) {
-	return 0, err
+
+func (s *Storage) DeleteAdmin(ctx context.Context, login string) (res bool, err error) {
+	const op = "storage.DeleteAdmin"
+	query := "delete * from admins where user_id = (select id from users where login= ?)"
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w ", op, err)
+	}
+	_, err = stmt.ExecContext(ctx, login)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w ", op, err)
+	}
+	return true, err
 }
 func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error) {
 	const op = "storage.AddApp"
@@ -129,7 +161,7 @@ func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error
 	query := "INSERT INTO apps (name,secret) VALUES(?,?)"
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
-
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 	res, err := stmt.ExecContext(ctx, name, secret)
 	if err != nil {
@@ -137,7 +169,7 @@ func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error
 		if errors.As(err, &errSql) && errSql.ExtendedCode == sql.ErrNoRows {
 			return 0, storage.ErrAppExists
 		}
-		return 0, err
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 	uid, err := res.LastInsertId()
 	if err != nil {

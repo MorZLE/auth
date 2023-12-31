@@ -1,9 +1,9 @@
-package auth
+package controller
 
 import (
 	"context"
 	"errors"
-	"github.com/MorZLE/auth/internal/constants"
+	"github.com/MorZLE/auth/internal/domain/constants"
 	authv1 "github.com/MorZLE/auth/internal/generate/grpc/gen/morzle.auth.v1"
 	"github.com/MorZLE/auth/internal/storage"
 	"google.golang.org/grpc"
@@ -18,12 +18,12 @@ const (
 type Auth interface {
 	LoginUser(ctx context.Context, login string, password string, appID int32) (token string, err error)
 	RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error)
-	CheckIsAdmin(ctx context.Context, userid int32) (bool, error)
+	CheckIsAdmin(ctx context.Context, userid int32, appID int32) (bool, error)
 }
 
 type AuthAdmin interface {
-	CreateAdmin(ctx context.Context, login string, lvl int32, key string) (userid int64, err error)
-	DeleteAdmin(ctx context.Context, login string, key string) (userid int64, err error)
+	CreateAdmin(ctx context.Context, login string, lvl int32, key string, appid int32) (userid int64, err error)
+	DeleteAdmin(ctx context.Context, login string, key string) (res bool, err error)
 	AddApp(ctx context.Context, name, secret, key string) (userid int32, err error)
 }
 
@@ -79,12 +79,13 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 
 func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*authv1.IsAdminResponse, error) {
 
-	userID := req.UserId
-	if userID == emptyValue {
+	userID := req.GetUserId()
+	appID := req.GetAppId()
+	if userID == emptyValue || appID == emptyValue {
 		return nil, status.Error(codes.InvalidArgument, "userID exist")
 	}
 
-	flag, err := s.auth.CheckIsAdmin(ctx, userID)
+	flag, err := s.auth.CheckIsAdmin(ctx, userID, appID)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			return nil, status.Error(codes.InvalidArgument, "internal error")
@@ -101,12 +102,13 @@ func (s *serverAPI) CreateAdmin(ctx context.Context, req *authv1.CreateAdminRequ
 	login := req.GetLogin()
 	lvl := req.GetLvl()
 	key := req.GetKey()
+	appID := req.GetAppId()
 
-	if login == "" || lvl == 0 || key == "" {
+	if login == "" || lvl == emptyValue || key == "" || appID == emptyValue {
 		return nil, status.Error(codes.InvalidArgument, "data not exist")
 	}
 
-	userid, err := s.authAdmin.CreateAdmin(ctx, login, lvl, key)
+	userid, err := s.authAdmin.CreateAdmin(ctx, login, lvl, key, appID)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal error")
 	}
@@ -121,11 +123,11 @@ func (s *serverAPI) DeleteAdmin(ctx context.Context, req *authv1.DeleteAdminRequ
 		return nil, status.Error(codes.InvalidArgument, "data not exist")
 	}
 
-	userid, err := s.authAdmin.DeleteAdmin(ctx, login, key)
+	res, err := s.authAdmin.DeleteAdmin(ctx, login, key)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal error")
 	}
-	return &authv1.DeleteAdminResponse{UserId: userid}, nil
+	return &authv1.DeleteAdminResponse{Result: res}, nil
 }
 
 func (s *serverAPI) AddApp(ctx context.Context, req *authv1.AddAppRequest) (*authv1.AddAppResponse, error) {

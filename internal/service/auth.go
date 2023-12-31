@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/MorZLE/auth/internal/constants"
+	"github.com/MorZLE/auth/internal/domain/constants"
 	"github.com/MorZLE/auth/internal/domain/models"
 	"github.com/MorZLE/auth/internal/generate/jwtgen"
 	"github.com/MorZLE/auth/internal/storage"
@@ -18,8 +18,8 @@ type UserSaver interface {
 }
 
 type UserProvider interface {
-	User(ctx context.Context, login string) (models.User, error)
-	IsAdmin(ctx context.Context, userID int32) (bool, error)
+	User(ctx context.Context, login string, appid int32) (models.User, error)
+	IsAdmin(ctx context.Context, userID int32, appid int32) (models.Admin, error)
 }
 
 type AppProvider interface {
@@ -27,8 +27,8 @@ type AppProvider interface {
 }
 
 type AdminProvider interface {
-	CreateAdmin(ctx context.Context, login string, lvl int32) (uid int64, err error)
-	DeleteAdmin(ctx context.Context, login string) (uid int64, err error)
+	CreateAdmin(ctx context.Context, login string, lvl int32, appID int32) (uid int64, err error)
+	DeleteAdmin(ctx context.Context, login string) (res bool, err error)
 	AddApp(ctx context.Context, name, secret string) (uid int32, err error)
 }
 
@@ -59,7 +59,7 @@ func (s *Auth) LoginUser(ctx context.Context, login string, password string, app
 		slog.String("login", login))
 	log.Info("login user")
 
-	user, err := s.usrProvider.User(ctx, login)
+	user, err := s.usrProvider.User(ctx, login, appID)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			s.log.Warn("user not found", slog.String("login", login),
@@ -117,12 +117,12 @@ func (s *Auth) RegisterNewUser(ctx context.Context, login string, password strin
 	return uid, nil
 }
 
-func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32) (bool, error) {
+func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (bool, error) {
 	const op = "auth.checkIsAdmin"
 
 	log := s.log.With(slog.String("op", op), slog.Int64("userid", int64(userid)))
 
-	ch, err := s.usrProvider.IsAdmin(ctx, userid)
+	_, err := s.usrProvider.IsAdmin(ctx, userid, appid)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.String("err", err.Error()))
@@ -133,17 +133,17 @@ func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32) (bool, error) {
 	}
 	log.Info("check is admin")
 
-	return ch, nil
+	return true, nil
 }
 
-func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key string) (userid int64, err error) {
+func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key string, appID int32) (userid int64, err error) {
 	const op = "auth.CreateAdmin"
 	log := s.log.With(slog.String("op", op), slog.String("login", login), slog.Int("lvl", int(lvl)))
 	if !checkKeyAdmin(key) {
 		return 0, constants.ErrNotRights
 	}
 
-	uid, err := s.admProvider.CreateAdmin(ctx, login, lvl)
+	uid, err := s.admProvider.CreateAdmin(ctx, login, lvl, appID)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.String("err", err.Error()))
@@ -157,11 +157,11 @@ func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key str
 	return uid, nil
 }
 
-func (s *Auth) DeleteAdmin(ctx context.Context, login string, key string) (userid int64, err error) {
+func (s *Auth) DeleteAdmin(ctx context.Context, login string, key string) (res bool, err error) {
 	const op = "auth.DeleteAdmin"
 
 	if !checkKeyAdmin(key) {
-		return 0, constants.ErrNotRights
+		return false, constants.ErrNotRights
 	}
 
 	log := s.log.With(slog.String("op", op), slog.String("login", login))
@@ -170,9 +170,9 @@ func (s *Auth) DeleteAdmin(ctx context.Context, login string, key string) (useri
 	if err != nil {
 		log.Error("error DeleteAdmin", slog.String("err", err.Error()))
 		if errors.Is(err, storage.ErrUserNotFound) {
-			return 0, constants.ErrInvalidCredentials
+			return false, constants.ErrInvalidCredentials
 		}
-		return 0, constants.ErrInternalErr
+		return false, constants.ErrInternalErr
 	}
 
 	log.Info(fmt.Sprintf("delete admin %s", login))
@@ -202,5 +202,5 @@ func (s *Auth) AddApp(ctx context.Context, name, secret, key string) (userid int
 }
 
 func checkKeyAdmin(key string) bool {
-	return key == "pppp"
+	return key != ""
 }

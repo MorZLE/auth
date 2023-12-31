@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"fmt"
-	serverAPI "github.com/MorZLE/auth/internal/grpc/auth"
+	serverAPI "github.com/MorZLE/auth/internal/controller"
 	"google.golang.org/grpc"
 
 	"log/slog"
@@ -34,7 +34,7 @@ func (a *App) MustRun() {
 }
 
 func (a *App) Run() error {
-	const op = "grpc.app.Run"
+	const op = "controller.app.Run"
 	log := a.log.With(slog.String("op", op))
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
@@ -42,7 +42,7 @@ func (a *App) Run() error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("running grpc server", slog.String("addr", l.Addr().String()))
+	log.Info("running controller server", slog.String("addr", l.Addr().String()))
 
 	if err := a.gRPCServer.Serve(l); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -52,7 +52,7 @@ func (a *App) Run() error {
 }
 
 func (a *App) Stop() {
-	const op = "grpc.app.Stop"
+	const op = "controller.app.Stop"
 
 	a.log.With(slog.String("op", op)).Info("stopping gRPC server", slog.Int("port", a.port))
 

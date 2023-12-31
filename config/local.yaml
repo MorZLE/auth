@@ -2,6 +2,6 @@ env: "local"
 storage_path: "./storage/auth.db"
 token_ttl: 1h
 grpc:
-  port: 4044
+  port: 51066
   timeout: 10h
 
