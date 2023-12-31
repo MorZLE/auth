@@ -1,14 +1,24 @@
 create table if not exists users (
-    id       integer primary key,
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
     login    text not null unique,
     passHash blob not null,
-    isadmin  boolean not null default false
+    app_id   INTEGER not null,
+    foreign key(app_id) references apps(id)
 );
 
-create index if not exists  idx_login on users(login);
+create table if not exists admins (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER not null,
+    lvl     INTEGER not null,
+    app_id  INTEGER not null,
+    foreign key(user_id) references users(id),
+    foreign key(app_id) references apps(id)
+);
+
+create index if not exists idx_login on users(login);
 
 create table if not exists apps (
-    id     int64  integer primary key,
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
     name   text not null unique,
     secret text not null unique
 );

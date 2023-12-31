@@ -6,4 +6,4 @@ tasks:
       - gen
     desk: "Генерация proto файла"
     cmds:
-      - protoc -I proto proto/sso.proto --go_out=./gen --go_opt=paths=source_relative --go-grpc_out=./gen --go-grpc_out=paths=source_relative
+        - protoc -I internal/generate/grpc/proto --go_out=internal/generate/grpc/gen --go_opt=paths=source_relative --go-grpc_out=internal/generate/grpc/gen --go-grpc_opt=paths=source_relative internal/generate/grpc/proto/sso.proto
