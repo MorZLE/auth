@@ -8,6 +8,7 @@ var (
 )
 
 var (
+	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user exists")
 	ErrAppExists          = errors.New("app exists")

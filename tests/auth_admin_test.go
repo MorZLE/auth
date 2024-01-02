@@ -139,7 +139,7 @@ func Test_DeleteAdmin(t *testing.T) {
 	require.True(t, respDelete.Result)
 
 	respCheck2, err := st.AuthClient.IsAdmin(ctx, &checkIsAdmin)
-	assert.ErrorContains(t, err, "user not admin")
+	assert.ErrorContains(t, err, "user not found")
 	require.Empty(t, respCheck2)
 
 }

@@ -15,12 +15,14 @@ const (
 	emptyValue = 0
 )
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=Auth
 type Auth interface {
 	LoginUser(ctx context.Context, login string, password string, appID int32) (token string, err error)
 	RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error)
 	CheckIsAdmin(ctx context.Context, userid int32, appID int32) (models.Admin, error)
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=AuthAdmin
 type AuthAdmin interface {
 	CreateAdmin(ctx context.Context, login string, lvl int32, key string, appid int32) (userid int64, err error)
 	DeleteAdmin(ctx context.Context, login string, key string) (res bool, err error)
@@ -49,7 +51,7 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 	token, err := s.auth.LoginUser(ctx, login, pswrd, numApp)
 	if err != nil {
 		if errors.Is(err, constants.ErrInvalidCredentials) {
-			return nil, status.Error(codes.InvalidArgument, "internal error")
+			return nil, status.Error(codes.InvalidArgument, "login not found")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
@@ -82,13 +84,13 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*a
 	userID := req.GetUserId()
 	appID := req.GetAppId()
 	if userID == emptyValue || appID == emptyValue {
-		return nil, status.Error(codes.InvalidArgument, "userID exist")
+		return nil, status.Error(codes.InvalidArgument, "userID empty")
 	}
 
 	res, err := s.auth.CheckIsAdmin(ctx, userID, appID)
 	if err != nil {
 		if errors.Is(err, constants.ErrInvalidCredentials) {
-			return nil, status.Error(codes.NotFound, "user not admin")
+			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
@@ -105,12 +107,18 @@ func (s *serverAPI) CreateAdmin(ctx context.Context, req *authv1.CreateAdminRequ
 	key := req.GetKey()
 	appID := req.GetAppId()
 
-	if login == "" || lvl == emptyValue || key == "" || appID == emptyValue {
+	if login == "" || lvl == emptyValue || appID == emptyValue {
 		return nil, status.Error(codes.InvalidArgument, "data not exist")
 	}
 
 	userid, err := s.authAdmin.CreateAdmin(ctx, login, lvl, key, appID)
 	if err != nil {
+		if errors.Is(err, constants.ErrNotRights) {
+			return nil, status.Error(codes.Aborted, "not enough rights")
+		}
+		if errors.Is(err, constants.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.CreateAdminResponse{UserId: userid}, nil
@@ -126,7 +134,7 @@ func (s *serverAPI) DeleteAdmin(ctx context.Context, req *authv1.DeleteAdminRequ
 
 	res, err := s.authAdmin.DeleteAdmin(ctx, login, key)
 	if err != nil {
-		if errors.Is(err, constants.ErrInvalidCredentials) {
+		if errors.Is(err, constants.ErrNotRights) {
 			return nil, status.Error(codes.NotFound, "user not admin")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
@@ -145,6 +153,9 @@ func (s *serverAPI) AddApp(ctx context.Context, req *authv1.AddAppRequest) (*aut
 	appID, err := s.authAdmin.AddApp(ctx, name, secret, key)
 
 	if err != nil {
+		if errors.Is(err, constants.ErrNotRights) {
+			return nil, status.Error(codes.NotFound, "user not admin")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.AddAppResponse{AppId: appID}, nil
