@@ -47,32 +47,30 @@ message AddAppResponse{
 
 
 
-
-message RegisterResponse{
-  int64 user_id = 1;    // возвращает id авторизованного пользователя
-}
-
 message RegisterRequest{
   string login = 1;  // логин
   string password = 2; // пароль
   int32 app_id = 3; // id приложения
 }
+message RegisterResponse{
+  int64 user_id = 1;    // возвращает id авторизованного пользователя
+}
+
 
 message LoginRequest{
   string login = 1;   // логин
   string password = 2; // пароль
   int32 app_id = 3; // id приложения
 }
-
 message LoginResponse{
   string token = 1; // возвращает JWT авторизованного пользователя
 }
+
 
 message IsAdminRequest{
   int32 user_id = 1;
   int32 app_id = 2;
 }
-
 message IsAdminResponse{
   bool is_admin = 1;
   int32 lvl = 2;

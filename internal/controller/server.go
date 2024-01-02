@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/MorZLE/auth/internal/domain/constants"
+	"github.com/MorZLE/auth/internal/domain/models"
 	authv1 "github.com/MorZLE/auth/internal/generate/grpc/gen/morzle.auth.v1"
-	"github.com/MorZLE/auth/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,7 +18,7 @@ const (
 type Auth interface {
 	LoginUser(ctx context.Context, login string, password string, appID int32) (token string, err error)
 	RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error)
-	CheckIsAdmin(ctx context.Context, userid int32, appID int32) (bool, error)
+	CheckIsAdmin(ctx context.Context, userid int32, appID int32) (models.Admin, error)
 }
 
 type AuthAdmin interface {
@@ -85,16 +85,17 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*a
 		return nil, status.Error(codes.InvalidArgument, "userID exist")
 	}
 
-	flag, err := s.auth.CheckIsAdmin(ctx, userID, appID)
+	res, err := s.auth.CheckIsAdmin(ctx, userID, appID)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
-			return nil, status.Error(codes.InvalidArgument, "internal error")
+		if errors.Is(err, constants.ErrInvalidCredentials) {
+			return nil, status.Error(codes.NotFound, "user not admin")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
 	return &authv1.IsAdminResponse{
-		IsAdmin: flag,
+		IsAdmin: true,
+		Lvl:     res.Lvl,
 	}, nil
 }
 
@@ -125,6 +126,9 @@ func (s *serverAPI) DeleteAdmin(ctx context.Context, req *authv1.DeleteAdminRequ
 
 	res, err := s.authAdmin.DeleteAdmin(ctx, login, key)
 	if err != nil {
+		if errors.Is(err, constants.ErrInvalidCredentials) {
+			return nil, status.Error(codes.NotFound, "user not admin")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 	return &authv1.DeleteAdminResponse{Result: res}, nil

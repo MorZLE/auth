@@ -117,23 +117,23 @@ func (s *Auth) RegisterNewUser(ctx context.Context, login string, password strin
 	return uid, nil
 }
 
-func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (bool, error) {
+func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (models.Admin, error) {
 	const op = "auth.checkIsAdmin"
 
 	log := s.log.With(slog.String("op", op), slog.Int64("userid", int64(userid)))
 
-	_, err := s.usrProvider.IsAdmin(ctx, userid, appid)
+	res, err := s.usrProvider.IsAdmin(ctx, userid, appid)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.String("err", err.Error()))
-			return false, constants.ErrInvalidCredentials
+			return res, constants.ErrInvalidCredentials
 		}
 		log.Error("error check is admin", slog.String("err", err.Error()))
-		return false, err
+		return res, err
 	}
 	log.Info("check is admin")
 
-	return true, nil
+	return res, nil
 }
 
 func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key string, appID int32) (userid int64, err error) {
@@ -169,6 +169,7 @@ func (s *Auth) DeleteAdmin(ctx context.Context, login string, key string) (res b
 	uid, err := s.admProvider.DeleteAdmin(ctx, login)
 	if err != nil {
 		log.Error("error DeleteAdmin", slog.String("err", err.Error()))
+
 		if errors.Is(err, storage.ErrUserNotFound) {
 			return false, constants.ErrInvalidCredentials
 		}

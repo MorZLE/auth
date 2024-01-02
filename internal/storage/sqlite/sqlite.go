@@ -85,9 +85,10 @@ func (s *Storage) IsAdmin(ctx context.Context, userID int32, appID int32) (model
 	err = row.Scan(&res.Id, &res.UserID, &res.Lvl, &res.AppID)
 	if err != nil {
 		var sqlErr sqlite3.Error
-		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows {
+		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows || err.Error() == "sql: no rows in result set" {
 			return res, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
 		}
+
 		return res, fmt.Errorf("%s: %w ", op, err)
 	}
 
@@ -143,7 +144,7 @@ func (s *Storage) CreateAdmin(ctx context.Context, login string, lvl int32, appI
 
 func (s *Storage) DeleteAdmin(ctx context.Context, login string) (res bool, err error) {
 	const op = "storage.DeleteAdmin"
-	query := "delete * from admins where user_id = (select id from users where login= ?)"
+	query := "delete from admins where user_id in (select id from users where login= ?)"
 
 	stmt, err := s.db.Prepare(query)
 	if err != nil {
@@ -151,7 +152,11 @@ func (s *Storage) DeleteAdmin(ctx context.Context, login string) (res bool, err 
 	}
 	_, err = stmt.ExecContext(ctx, login)
 	if err != nil {
-		return false, fmt.Errorf("%s: %w ", op, err)
+		var errSql sqlite3.Error
+		if errors.As(err, &errSql) && errSql.ExtendedCode == sql.ErrNoRows {
+			return false, storage.ErrUserNotFound
+		}
+		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	return true, err
 }
