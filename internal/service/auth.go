@@ -13,19 +13,23 @@ import (
 	"time"
 )
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=UserSaver
 type UserSaver interface {
 	SaveUser(ctx context.Context, login string, pswdHash []byte, appid int32) (uid int64, err error)
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=UserProvider
 type UserProvider interface {
 	User(ctx context.Context, login string, appid int32) (models.User, error)
 	IsAdmin(ctx context.Context, userID int32, appid int32) (models.Admin, error)
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=AppProvider
 type AppProvider interface {
 	App(ctx context.Context, appID int32) (models.App, error)
 }
 
+//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=AdminProvider
 type AdminProvider interface {
 	CreateAdmin(ctx context.Context, login string, lvl int32, appID int32) (uid int64, err error)
 	DeleteAdmin(ctx context.Context, login string) (res bool, err error)
@@ -129,7 +133,7 @@ func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (mod
 			return res, constants.ErrInvalidCredentials
 		}
 		log.Error("error check is admin", slog.String("err", err.Error()))
-		return res, err
+		return res, constants.ErrInternalErr
 	}
 	log.Info("check is admin")
 
@@ -150,7 +154,7 @@ func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key str
 			return 0, constants.ErrInvalidCredentials
 		}
 		log.Error("error createAdmin is admin", slog.String("err", err.Error()))
-		return 0, err
+		return 0, constants.ErrInternalErr
 	}
 
 	log.Info(fmt.Sprintf("change root admin %s", login))
