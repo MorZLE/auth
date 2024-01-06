@@ -89,3 +89,57 @@ func TestCreate_IsAdmin_HappyPath(t *testing.T) {
 	require.True(t, respCheck.IsAdmin)
 
 }
+
+func Test_DeleteAdmin(t *testing.T) {
+	ctx, st := suite.NewSuite(t)
+
+	appID := appID
+	login := gofakeit.Name()
+	lvl := gofakeit.Int32()
+	pass := RandomPassword()
+	key := key
+
+	reqReg := authv1.RegisterRequest{
+		Login:    login,
+		Password: pass,
+		AppId:    int32(appID),
+	}
+
+	respReg, err := st.AuthClient.Register(ctx, &reqReg)
+	require.NoError(t, err)
+	assert.NotEmpty(t, respReg.GetUserId())
+
+	createReq := authv1.CreateAdminRequest{
+		Login: login,
+		Lvl:   lvl,
+		Key:   key,
+		AppId: int32(appID),
+	}
+
+	respAdm, err := st.AuthClient.CreateAdmin(ctx, &createReq)
+	require.NoError(t, err)
+	require.NotEmpty(t, respAdm)
+
+	checkIsAdmin := authv1.IsAdminRequest{
+		UserId: int32(respReg.UserId),
+		AppId:  int32(appID),
+	}
+
+	respCheck, err := st.AuthClient.IsAdmin(ctx, &checkIsAdmin)
+	require.NoError(t, err)
+	assert.Equal(t, lvl, respCheck.Lvl)
+	require.True(t, respCheck.IsAdmin)
+
+	deleteReq := authv1.DeleteAdminRequest{
+		Login: login,
+		Key:   key,
+	}
+	respDelete, err := st.AuthClient.DeleteAdmin(ctx, &deleteReq)
+	require.NoError(t, err)
+	require.True(t, respDelete.Result)
+
+	respCheck2, err := st.AuthClient.IsAdmin(ctx, &checkIsAdmin)
+	assert.ErrorContains(t, err, "user not found")
+	require.Empty(t, respCheck2)
+
+}
