@@ -106,7 +106,7 @@ func TestAuth_AddApp(t *testing.T) {
 			}
 			gotUserid, err := s.AddApp(context.Background(), tt.args.name, tt.args.secret, tt.args.key)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AddApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddApp() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotUserid != tt.wantUserid {
@@ -197,7 +197,7 @@ func TestAuth_CheckIsAdmin(t *testing.T) {
 			}
 			got, err := s.CheckIsAdmin(context.Background(), tt.args.userid, tt.args.appid)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CheckIsAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CheckIsAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -302,7 +302,7 @@ func TestAuth_CreateAdmin(t *testing.T) {
 			}
 			gotUserid, err := s.CreateAdmin(context.Background(), tt.args.login, tt.args.lvl, tt.args.key, tt.args.appID)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CreateAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotUserid != tt.wantUserid {
@@ -398,7 +398,7 @@ func TestAuth_DeleteAdmin(t *testing.T) {
 
 			gotRes, err := s.DeleteAdmin(context.Background(), tt.args.login, tt.args.key)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("DeleteAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeleteAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotRes != tt.wantRes {

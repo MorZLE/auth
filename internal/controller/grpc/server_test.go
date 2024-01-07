@@ -1,9 +1,9 @@
-package controller
+package grpc
 
 import (
 	"context"
 	"errors"
-	"github.com/MorZLE/auth/internal/controller/mocks"
+	"github.com/MorZLE/auth/internal/controller/grpc/mocks"
 	"github.com/MorZLE/auth/internal/domain/constants"
 	"github.com/MorZLE/auth/internal/domain/models"
 	authv1 "github.com/MorZLE/auth/internal/generate/grpc/gen/morzle.auth.v1"
@@ -149,7 +149,7 @@ func Test_serverAPI_Login(t *testing.T) {
 				m.On("LoginUser", context.Background(), "teset", "teset", int32(1)).Return("", errors.ErrUnsupported)
 			},
 			want:    nil,
-			wantErr: status.Error(codes.Internal, "internal error"),
+			wantErr: status.Error(codes.Internal, "internal cerror"),
 		},
 	}
 	for _, tt := range tests {
@@ -161,7 +161,7 @@ func Test_serverAPI_Login(t *testing.T) {
 			}
 			got, err := s.Login(tt.args.ctx, tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("Login() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Login() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -282,10 +282,10 @@ func Test_serverAPI_Register(t *testing.T) {
 				},
 			},
 			mck: func(m *mocks.Auth) {
-				m.On("RegisterNewUser", context.Background(), "dzhdtjhrsjrstjh", "dzhdtjhrsjrstjh", int32(1)).Return(int64(0), errors.New("internal error"))
+				m.On("RegisterNewUser", context.Background(), "dzhdtjhrsjrstjh", "dzhdtjhrsjrstjh", int32(1)).Return(int64(0), errors.New("internal cerror"))
 			},
 			want:    nil,
-			wantErr: status.Error(codes.Internal, "internal error"),
+			wantErr: status.Error(codes.Internal, "internal cerror"),
 		},
 	}
 	for _, tt := range tests {
@@ -297,7 +297,7 @@ func Test_serverAPI_Register(t *testing.T) {
 			}
 			got, err := s.Register(context.Background(), tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("Register() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Register() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -403,7 +403,7 @@ func Test_serverAPI_IsAdmin(t *testing.T) {
 			}
 			got, err := s.IsAdmin(context.Background(), tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("IsAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("IsAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -520,7 +520,7 @@ func Test_serverAPI_CreateAdmin(t *testing.T) {
 		{
 			name: "internal_error",
 			mck: func(m *mocks.AuthAdmin) {
-				m.On("CreateAdmin", context.Background(), "sefsef", int32(23), "", int32(890)).Return(int64(0), errors.New("error"))
+				m.On("CreateAdmin", context.Background(), "sefsef", int32(23), "", int32(890)).Return(int64(0), errors.New("cerror"))
 			},
 			args: args{
 				req: &authv1.CreateAdminRequest{
@@ -531,7 +531,7 @@ func Test_serverAPI_CreateAdmin(t *testing.T) {
 				},
 			},
 			want:    nil,
-			wantErr: status.Error(codes.Internal, "internal error"),
+			wantErr: status.Error(codes.Internal, "internal cerror"),
 		},
 	}
 	for _, tt := range tests {
@@ -543,7 +543,7 @@ func Test_serverAPI_CreateAdmin(t *testing.T) {
 			}
 			got, err := s.CreateAdmin(context.Background(), tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CreateAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -622,7 +622,7 @@ func Test_serverAPI_DeleteAdmin(t *testing.T) {
 			wantErr: status.Error(codes.NotFound, "user not admin"),
 		},
 		{
-			name: "internal error",
+			name: "internal cerror",
 			mck: func(m *mocks.AuthAdmin) {
 				m.On("DeleteAdmin", context.Background(), "awdvzvwe", "argearg").Return(false, errors.ErrUnsupported)
 			},
@@ -633,7 +633,7 @@ func Test_serverAPI_DeleteAdmin(t *testing.T) {
 				},
 			},
 			want:    nil,
-			wantErr: status.Error(codes.Internal, "internal error"),
+			wantErr: status.Error(codes.Internal, "internal cerror"),
 		},
 	}
 	for _, tt := range tests {
@@ -645,7 +645,7 @@ func Test_serverAPI_DeleteAdmin(t *testing.T) {
 			}
 			got, err := s.DeleteAdmin(context.Background(), tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CreateAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -742,9 +742,9 @@ func Test_serverAPI_AddApp(t *testing.T) {
 			wantErr: status.Error(codes.NotFound, "user not admin"),
 		},
 		{
-			name: "internal error",
+			name: "internal cerror",
 			mck: func(m *mocks.AuthAdmin) {
-				m.On("AddApp", context.Background(), "sefsef", "wqrqwre", "sefsfe").Return(int32(0), errors.New("internal error"))
+				m.On("AddApp", context.Background(), "sefsef", "wqrqwre", "sefsfe").Return(int32(0), errors.New("internal cerror"))
 			},
 			args: args{
 				req: &authv1.AddAppRequest{
@@ -754,7 +754,7 @@ func Test_serverAPI_AddApp(t *testing.T) {
 				},
 			},
 			want:    nil,
-			wantErr: status.Error(codes.Internal, "internal error"),
+			wantErr: status.Error(codes.Internal, "internal cerror"),
 		},
 	}
 	for _, tt := range tests {
@@ -767,7 +767,7 @@ func Test_serverAPI_AddApp(t *testing.T) {
 			}
 			got, err := s.AddApp(context.Background(), tt.args.req)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AddApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddApp() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

@@ -1,4 +1,4 @@
-package constants
+package cerror
 
 import "github.com/pkg/errors"
 

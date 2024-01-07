@@ -198,7 +198,7 @@ func TestLogin_FailCases(t *testing.T) {
 			name:    "bad appid empty",
 			login:   gofakeit.Name(),
 			pass:    RandomPassword(),
-			wantErr: "internal error",
+			wantErr: "internal cerror",
 			appid:   124,
 		},
 	}
