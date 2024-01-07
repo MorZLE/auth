@@ -109,8 +109,8 @@ func (s *Storage) App(ctx context.Context, appID int32) (models.App, error) {
 	err = row.Scan(&res.ID, &res.Name, &res.Secret)
 	if err != nil {
 		var sqlErr sqlite3.Error
-		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows {
-			return res, fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
+		if errors.As(err, &sqlErr) && sqlErr.ExtendedCode == sql.ErrNoRows || err.Error() == "sql: no rows in result set" {
+			return res, storage.ErrAppNotFound
 		}
 		return res, fmt.Errorf("%s: %w ", op, err)
 	}
@@ -174,6 +174,9 @@ func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error
 		if errors.As(err, &errSql) && errSql.ExtendedCode == sql.ErrNoRows {
 			return 0, storage.ErrAppExists
 		}
+		if errors.As(err, &errSql) && errSql.Error() == "UNIQUE constraint failed: apps.name" {
+			return 0, storage.ErrUniqueApp
+		}
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 	uid, err := res.LastInsertId()
@@ -182,4 +185,8 @@ func (s *Storage) AddApp(ctx context.Context, name, secret string) (int32, error
 	}
 
 	return int32(uid), nil
+}
+
+func (s *Storage) Close() error {
+	return s.db.Close()
 }
