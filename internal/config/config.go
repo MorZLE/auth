@@ -13,9 +13,15 @@ type Config struct {
 	StoragePath string        `yaml:"storage_path" env-required:"true"`
 	TokenTTL    time.Duration `yaml:"token_ttl" env-required:"true"`
 	GRPC        GrpcConfig    `yaml:"grpc"`
+	Rest        Rest          `yaml:"rest"`
 }
 
 type GrpcConfig struct {
+	Port    int           `yaml:"port"`
+	Timeout time.Duration `yaml:"timeout"`
+}
+
+type Rest struct {
 	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
 }

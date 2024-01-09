@@ -21,7 +21,7 @@ func main() {
 	log := setupLogger(cfg.Env)
 	log.Info("starting app", slog.String("env", cfg.Env))
 
-	application := app.NewApp(log, cfg.GRPC.Port, cfg.StoragePath, cfg.GRPC.Timeout)
+	application := app.NewApp(log, cfg)
 
 	go application.GRPCSrv.MustRun()
 	go application.RESTapi.Run()

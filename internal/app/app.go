@@ -2,23 +2,24 @@ package app
 
 import (
 	grpcserver "github.com/MorZLE/auth/internal/app/grpc"
+	"github.com/MorZLE/auth/internal/config"
 	"github.com/MorZLE/auth/internal/controller/rest"
 	"github.com/MorZLE/auth/internal/service"
 	"github.com/MorZLE/auth/internal/storage/sqlite"
 	"log/slog"
-	"time"
 )
 
-func NewApp(log *slog.Logger, port int, strPath string, ttl time.Duration) *App {
+func NewApp(log *slog.Logger, cfg *config.Config) *App {
 
-	storage, err := sqlite.NewStorage(strPath)
+	storage, err := sqlite.NewStorage(cfg.StoragePath)
 	if err != nil {
 		panic(err)
 	}
-	authservice := service.NewAuth(log, storage, storage, storage, storage, ttl)
-	grpcApp := grpcserver.NewApp(log, port, authservice, authservice)
+	authservice := service.NewAuth(log, storage, storage, storage, storage, cfg.GRPC.Timeout)
 
-	restAPI := rest.NewHandler(log, authservice, authservice)
+	grpcApp := grpcserver.NewGRPC(log, cfg.GRPC.Port, authservice, authservice)
+
+	restAPI := rest.NewHandler(log, authservice, authservice, cfg.Rest.Port, cfg.Rest.Timeout)
 
 	if err != nil {
 		panic(err)

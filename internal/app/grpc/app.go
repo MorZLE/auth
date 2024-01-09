@@ -10,7 +10,7 @@ import (
 	"net"
 )
 
-func NewApp(log *slog.Logger, port int, authservice controller.Auth, authAdmin controller.AuthAdmin) *App {
+func NewGRPC(log *slog.Logger, port int, authservice controller.Auth, authAdmin controller.AuthAdmin) *App {
 	grpcServer := grpc.NewServer()
 
 	serverAPI.RegisterServerAPI(grpcServer, authservice, authAdmin)
