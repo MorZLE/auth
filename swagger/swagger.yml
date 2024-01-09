@@ -1,0 +1,203 @@
+swagger: "2.0"
+info:
+  title: Auth API
+  description: API сервиса авторизации
+  version: 1.0.0
+host: localhost:8080
+basePath: /api
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Регистрация пользователя
+      parameters:
+        - name: login
+          in: query
+          description: User login
+          required: true
+          type: string
+        - name: password
+          in: query
+          description: User password
+          required: true
+          type: string
+        - name: app_id
+          in: query
+          description: Application ID
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Successful registration
+          schema:
+            $ref: "#/definitions/RegisterResponse"
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Авторизация
+      parameters:
+        - name: login
+          in: query
+          description: User login
+          required: true
+          type: string
+        - name: password
+          in: query
+          description: User password
+          required: true
+          type: string
+        - name: app_id
+          in: query
+          description: Application ID
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Successful login
+          schema:
+            $ref: "#/definitions/LoginResponse"
+
+  /auth/checkadmin:
+    get:
+      tags:
+        - Auth
+      summary: Проверка пользователя на администратора
+      parameters:
+        - name: user_id
+          in: query
+          description: userID
+          required: true
+          type: integer
+        - name: app_id
+          in: query
+          description: Application ID
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/IsAdminResponse"
+
+  /auth/createadmin:
+    post:
+      tags:
+        - Auth
+      summary: Добавление администратора
+      parameters:
+        - name: login
+          in: query
+          description: User login
+          required: true
+          type: string
+        - name: lvl
+          in: query
+          description: lvl admin
+          required: true
+          type: integer
+        - name: key
+          in: query
+          description: secret key
+          required: true
+          type: string
+        - name: app_id
+          in: query
+          description: Application ID
+          required: true
+          type: integer
+
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/CreateAdminResponse"
+
+  /auth/deleteadmin:
+    delete:
+      tags:
+        - Auth
+      summary: Удаление администратора
+
+      parameters:
+        - name: login
+          in: query
+          description: login
+          required: true
+          type: string
+        - name: key
+          in: query
+          description: secret key
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/DeleteAdminResponse"
+
+definitions:
+  RegisterResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          userID:
+            type: integer
+
+  LoginResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          token:
+            type: string
+
+  IsAdminResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          is_admin:
+            type: boolean
+          lvl:
+            type: integer
+
+  DeleteAdminResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          Result:
+            type: boolean
+
+  CreateAdminResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          AdminID:
+            type: integer
