@@ -40,12 +40,12 @@ func MustLoadByPath(confPath string) *Config {
 	var cnf Config
 
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		panic(fmt.Sprintf("config file does not exist: %w", err))
+		panic(fmt.Sprintf("config file does not exist: %s", err))
 	}
 
 	err := cleanenv.ReadConfig(confPath, &cnf)
 	if err != nil {
-		panic(fmt.Sprintf("err read config: %w", err))
+		panic(fmt.Sprintf("err read config: %s", err))
 	}
 
 	return &cnf

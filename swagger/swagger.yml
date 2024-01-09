@@ -138,8 +138,47 @@ paths:
           description: Successful response
           schema:
             $ref: "#/definitions/DeleteAdminResponse"
+  /auth/addapp:
+    get:
+      tags:
+        - Auth
+      summary: Добавление приложения
 
+      parameters:
+        - name: name
+          in: query
+          description: name
+          required: true
+          type: string
+        - name: key
+          in: query
+          description: secret key
+          required: true
+          type: string
+        - name: secret
+          in: query
+          description: secret key for jwt
+          required: true
+          type: string
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/AddAppResponse"
 definitions:
+
+  AddAppResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+        example: 200
+      body:
+        type: object
+        properties:
+          appID:
+            type: integer
+
   RegisterResponse:
     type: object
     properties:

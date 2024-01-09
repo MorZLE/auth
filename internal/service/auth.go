@@ -83,7 +83,10 @@ func (s *Auth) LoginUser(ctx context.Context, login string, password string, app
 	app, err := s.appProvider.App(ctx, appID)
 	if err != nil {
 		s.log.Error("cerror get app", slog.String("err", err.Error()))
-		return "", storage.ErrAppNotFound
+		if errors.Is(err, storage.ErrAppNotFound) {
+			return "", cerror.ErrAppNotFound
+		}
+		return "", err
 	}
 
 	token, err = jwtgen.NewJWT(user, app, s.tokenTTL)
@@ -132,7 +135,7 @@ func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (mod
 			log.Error("user not found", slog.String("err", err.Error()))
 			return res, cerror.ErrInvalidCredentials
 		}
-		log.Error("cerror check is admin", slog.String("err", err.Error()))
+		log.Error("check is admin", slog.String("err", err.Error()))
 		return res, cerror.ErrInternalErr
 	}
 	log.Info("check is admin")
@@ -197,7 +200,7 @@ func (s *Auth) AddApp(ctx context.Context, name, secret, key string) (userid int
 	if err != nil {
 		log.Error("cerror AddApp", slog.String("err", err.Error()))
 		if errors.Is(err, storage.ErrAppExists) {
-			return 0, cerror.ErrUserExists
+			return 0, cerror.ErrAppExists
 		}
 		return 0, cerror.ErrInternalErr
 	}

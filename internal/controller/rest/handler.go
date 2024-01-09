@@ -30,7 +30,6 @@ func (h *Handler) Run() {
 	app.Use(logger.New())
 	h.Route(app)
 	err := app.Listen(fmt.Sprintf(":%d", h.port))
-
 	if err != nil {
 		panic(err)
 	}
@@ -50,6 +49,7 @@ func (h *Handler) Route(app *fiber.App) {
 	app.Get("/api/auth/checkadmin", h.IsAdmin)
 	app.Post("/api/auth/createadmin", h.CreateAdmin)
 	app.Delete("/api/auth/deleteadmin", h.DeleteAdmin)
+	app.Get("/api/auth/addapp", h.AddApp)
 }
 
 func (h *Handler) Login(c *fiber.Ctx) error {

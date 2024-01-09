@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/MorZLE/auth/internal/controller/grpc/mocks"
-	"github.com/MorZLE/auth/internal/domain/constants"
+	"github.com/MorZLE/auth/internal/domain/cerror"
 	"github.com/MorZLE/auth/internal/domain/models"
 	authv1 "github.com/MorZLE/auth/internal/generate/grpc/gen/morzle.auth.v1"
 	"google.golang.org/grpc/codes"
@@ -130,7 +130,7 @@ func Test_serverAPI_Login(t *testing.T) {
 				},
 			},
 			mck: func(m *mocks.Auth) {
-				m.On("LoginUser", context.Background(), "teset", "teset", int32(1)).Return("", constants.ErrInvalidCredentials)
+				m.On("LoginUser", context.Background(), "teset", "teset", int32(1)).Return("", cerror.ErrInvalidCredentials)
 			},
 			want:    nil,
 			wantErr: status.Error(codes.InvalidArgument, "login not found"),
@@ -267,7 +267,7 @@ func Test_serverAPI_Register(t *testing.T) {
 				},
 			},
 			mck: func(m *mocks.Auth) {
-				m.On("RegisterNewUser", context.Background(), "dzhdtjhrsjrstjh", "dzhdtjhrsjrstjh", int32(1)).Return(int64(0), constants.ErrUserExists)
+				m.On("RegisterNewUser", context.Background(), "dzhdtjhrsjrstjh", "dzhdtjhrsjrstjh", int32(1)).Return(int64(0), cerror.ErrUserExists)
 			},
 			want:    nil,
 			wantErr: status.Error(codes.AlreadyExists, "user already exists"),
@@ -387,7 +387,7 @@ func Test_serverAPI_IsAdmin(t *testing.T) {
 				},
 			},
 			mck: func(m *mocks.Auth) {
-				m.On("CheckIsAdmin", context.Background(), int32(6), int32(3)).Return(models.Admin{}, constants.ErrInvalidCredentials)
+				m.On("CheckIsAdmin", context.Background(), int32(6), int32(3)).Return(models.Admin{}, cerror.ErrInvalidCredentials)
 			},
 			want:    nil,
 			wantErr: status.Error(codes.NotFound, "user not found"),
@@ -504,7 +504,7 @@ func Test_serverAPI_CreateAdmin(t *testing.T) {
 		{
 			name: "invalid_Key",
 			mck: func(m *mocks.AuthAdmin) {
-				m.On("CreateAdmin", context.Background(), "sefsef", int32(23), "", int32(43)).Return(int64(0), constants.ErrNotRights)
+				m.On("CreateAdmin", context.Background(), "sefsef", int32(23), "", int32(43)).Return(int64(0), cerror.ErrNotRights)
 			},
 			args: args{
 				req: &authv1.CreateAdminRequest{
@@ -610,7 +610,7 @@ func Test_serverAPI_DeleteAdmin(t *testing.T) {
 		{
 			name: "invalid key",
 			mck: func(m *mocks.AuthAdmin) {
-				m.On("DeleteAdmin", context.Background(), "awdvzvwe", "argearg").Return(false, constants.ErrNotRights)
+				m.On("DeleteAdmin", context.Background(), "awdvzvwe", "argearg").Return(false, cerror.ErrNotRights)
 			},
 			args: args{
 				req: &authv1.DeleteAdminRequest{
@@ -729,7 +729,7 @@ func Test_serverAPI_AddApp(t *testing.T) {
 		{
 			name: "negative key",
 			mck: func(m *mocks.AuthAdmin) {
-				m.On("AddApp", context.Background(), "sefsef", "wqrqwre", "sefsfe").Return(int32(0), constants.ErrNotRights)
+				m.On("AddApp", context.Background(), "sefsef", "wqrqwre", "sefsfe").Return(int32(0), cerror.ErrNotRights)
 			},
 			args: args{
 				req: &authv1.AddAppRequest{
