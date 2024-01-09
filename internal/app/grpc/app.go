@@ -2,14 +2,15 @@ package grpc
 
 import (
 	"fmt"
-	serverAPI "github.com/MorZLE/auth/internal/controller"
+	"github.com/MorZLE/auth/internal/controller"
+	serverAPI "github.com/MorZLE/auth/internal/controller/grpc"
 	"google.golang.org/grpc"
 
 	"log/slog"
 	"net"
 )
 
-func NewApp(log *slog.Logger, port int, authservice serverAPI.Auth, authAdmin serverAPI.AuthAdmin) *App {
+func NewGRPC(log *slog.Logger, port int, authservice controller.Auth, authAdmin controller.AuthAdmin) *App {
 	grpcServer := grpc.NewServer()
 
 	serverAPI.RegisterServerAPI(grpcServer, authservice, authAdmin)

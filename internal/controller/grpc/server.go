@@ -1,10 +1,10 @@
-package controller
+package grpc
 
 import (
 	"context"
 	"errors"
-	"github.com/MorZLE/auth/internal/domain/constants"
-	"github.com/MorZLE/auth/internal/domain/models"
+	"github.com/MorZLE/auth/internal/controller"
+	"github.com/MorZLE/auth/internal/domain/cerror"
 	authv1 "github.com/MorZLE/auth/internal/generate/grpc/gen/morzle.auth.v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,27 +15,13 @@ const (
 	emptyValue = 0
 )
 
-//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=Auth
-type Auth interface {
-	LoginUser(ctx context.Context, login string, password string, appID int32) (token string, err error)
-	RegisterNewUser(ctx context.Context, login string, password string, appid int32) (userid int64, err error)
-	CheckIsAdmin(ctx context.Context, userid int32, appID int32) (models.Admin, error)
-}
-
-//go:generate go run github.com/vektra/mockery/v2@v2.20.0 --name=AuthAdmin
-type AuthAdmin interface {
-	CreateAdmin(ctx context.Context, login string, lvl int32, key string, appid int32) (userid int64, err error)
-	DeleteAdmin(ctx context.Context, login string, key string) (res bool, err error)
-	AddApp(ctx context.Context, name, secret, key string) (userid int32, err error)
-}
-
 type serverAPI struct {
 	authv1.UnimplementedAuthServer
-	auth      Auth
-	authAdmin AuthAdmin
+	auth      controller.Auth
+	authAdmin controller.AuthAdmin
 }
 
-func RegisterServerAPI(gRPC *grpc.Server, auth Auth, authAdmin AuthAdmin) {
+func RegisterServerAPI(gRPC *grpc.Server, auth controller.Auth, authAdmin controller.AuthAdmin) {
 	authv1.RegisterAuthServer(gRPC, &serverAPI{auth: auth, authAdmin: authAdmin})
 }
 
@@ -50,10 +36,10 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 
 	token, err := s.auth.LoginUser(ctx, login, pswrd, numApp)
 	if err != nil {
-		if errors.Is(err, constants.ErrInvalidCredentials) {
+		if errors.Is(err, cerror.ErrInvalidCredentials) {
 			return nil, status.Error(codes.InvalidArgument, "login not found")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 
 	return &authv1.LoginResponse{Token: token}, nil
@@ -70,10 +56,10 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 
 	userID, err := s.auth.RegisterNewUser(ctx, login, pswrd, appid)
 	if err != nil {
-		if errors.Is(err, constants.ErrUserExists) {
+		if errors.Is(err, cerror.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "user already exists")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 
 	return &authv1.RegisterResponse{UserId: userID}, nil
@@ -89,10 +75,10 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*a
 
 	res, err := s.auth.CheckIsAdmin(ctx, userID, appID)
 	if err != nil {
-		if errors.Is(err, constants.ErrInvalidCredentials) {
+		if errors.Is(err, cerror.ErrInvalidCredentials) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 
 	return &authv1.IsAdminResponse{
@@ -113,13 +99,13 @@ func (s *serverAPI) CreateAdmin(ctx context.Context, req *authv1.CreateAdminRequ
 
 	userid, err := s.authAdmin.CreateAdmin(ctx, login, lvl, key, appID)
 	if err != nil {
-		if errors.Is(err, constants.ErrNotRights) {
+		if errors.Is(err, cerror.ErrNotRights) {
 			return nil, status.Error(codes.Aborted, "not enough rights")
 		}
-		if errors.Is(err, constants.ErrUserNotFound) {
+		if errors.Is(err, cerror.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 	return &authv1.CreateAdminResponse{UserId: userid}, nil
 }
@@ -134,10 +120,10 @@ func (s *serverAPI) DeleteAdmin(ctx context.Context, req *authv1.DeleteAdminRequ
 
 	res, err := s.authAdmin.DeleteAdmin(ctx, login, key)
 	if err != nil {
-		if errors.Is(err, constants.ErrNotRights) {
+		if errors.Is(err, cerror.ErrNotRights) {
 			return nil, status.Error(codes.NotFound, "user not admin")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 	return &authv1.DeleteAdminResponse{Result: res}, nil
 }
@@ -153,10 +139,10 @@ func (s *serverAPI) AddApp(ctx context.Context, req *authv1.AddAppRequest) (*aut
 	appID, err := s.authAdmin.AddApp(ctx, name, secret, key)
 
 	if err != nil {
-		if errors.Is(err, constants.ErrNotRights) {
+		if errors.Is(err, cerror.ErrNotRights) {
 			return nil, status.Error(codes.NotFound, "user not admin")
 		}
-		return nil, status.Error(codes.Internal, "internal error")
+		return nil, status.Error(codes.Internal, "internal cerror")
 	}
 	return &authv1.AddAppResponse{AppId: appID}, nil
 

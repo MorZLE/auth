@@ -27,13 +27,13 @@ func TestStorage_AddApp(t *testing.T) {
 
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 
 		row := stmt.QueryRowContext(context.Background(), app.ID)
 		err = row.Scan(&gotRes.ID, &gotRes.Name, &gotRes.Secret)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 
 		if !reflect.DeepEqual(app, gotRes) {
@@ -102,7 +102,7 @@ func TestStorage_AddApp(t *testing.T) {
 			got, err := s.AddApp(context.Background(), tt.args.name, tt.args.secret)
 
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AddApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddApp() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
@@ -134,11 +134,11 @@ func TestStorage_App(t *testing.T) {
 		query := "INSERT INTO apps (name,secret) VALUES(?,?)"
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 		_, err = stmt.ExecContext(context.Background(), app.Name, app.Secret)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 	}
 
@@ -150,11 +150,11 @@ func TestStorage_App(t *testing.T) {
 		query := "delete from apps where id = ?"
 		stmt, err := db.Prepare(query)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 		_, err = stmt.ExecContext(context.Background(), 3)
 		if err != nil {
-			t.Errorf("AddApp() error = %v", err)
+			t.Errorf("AddApp() cerror = %v", err)
 		}
 	}(t)
 
@@ -208,118 +208,13 @@ func TestStorage_App(t *testing.T) {
 			got, err := s.App(context.Background(), tt.args.appID)
 
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AddApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddApp() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(tt.want, got) {
 				t.Errorf("AddApp() got = %v, want %v", got, tt.want)
 			}
 
-		})
-	}
-}
-
-func TestStorage_CreateAdmin(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx   context.Context
-		login string
-		lvl   int32
-		appID int32
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantUid int64
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Storage{
-				db: tt.fields.db,
-			}
-			gotUid, err := s.CreateAdmin(tt.args.ctx, tt.args.login, tt.args.lvl, tt.args.appID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateAdmin() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotUid != tt.wantUid {
-				t.Errorf("CreateAdmin() gotUid = %v, want %v", gotUid, tt.wantUid)
-			}
-		})
-	}
-}
-
-func TestStorage_DeleteAdmin(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx   context.Context
-		login string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantRes bool
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Storage{
-				db: tt.fields.db,
-			}
-			gotRes, err := s.DeleteAdmin(tt.args.ctx, tt.args.login)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DeleteAdmin() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotRes != tt.wantRes {
-				t.Errorf("DeleteAdmin() gotRes = %v, want %v", gotRes, tt.wantRes)
-			}
-		})
-	}
-}
-
-func TestStorage_IsAdmin(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx    context.Context
-		userID int32
-		appID  int32
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    models.Admin
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Storage{
-				db: tt.fields.db,
-			}
-			got, err := s.IsAdmin(tt.args.ctx, tt.args.userID, tt.args.appID)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("IsAdmin() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("IsAdmin() got = %v, want %v", got, tt.want)
-			}
 		})
 	}
 }
@@ -399,7 +294,7 @@ func TestStorage_SaveUser(t *testing.T) {
 			}
 			gotUid, err := s.SaveUser(context.Background(), tt.args.login, tt.args.pswdHash, tt.args.appid)
 			if !errors.Is(err, tt.error) {
-				t.Errorf("SaveUser() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SaveUser() cerror = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if gotUid != tt.wantUid {
@@ -407,7 +302,7 @@ func TestStorage_SaveUser(t *testing.T) {
 			}
 			err = checkDB(tt.args.login, tt.args.appid)
 			if err != nil {
-				t.Errorf("SaveUser() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SaveUser() cerror = %v, wantErr %v", err, tt.wantErr)
 			}
 
 		})
@@ -486,7 +381,7 @@ func TestStorage_User(t *testing.T) {
 			}
 			got, err := s.User(context.Background(), tt.args.login, tt.args.appid)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("User() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("User() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {

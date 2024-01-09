@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/MorZLE/auth/internal/domain/constants"
+	"github.com/MorZLE/auth/internal/domain/cerror"
 	"github.com/MorZLE/auth/internal/domain/models"
 	"github.com/MorZLE/auth/internal/generate/jwtgen"
 	"github.com/MorZLE/auth/internal/storage"
@@ -69,27 +69,30 @@ func (s *Auth) LoginUser(ctx context.Context, login string, password string, app
 			s.log.Warn("user not found", slog.String("login", login),
 				slog.String("op", op),
 				slog.String("err", err.Error()))
-			return "", constants.ErrInvalidCredentials
+			return "", cerror.ErrInvalidCredentials
 		}
-		return "", fmt.Errorf("error get user %s: %w", op, err)
+		return "", fmt.Errorf("cerror get user %s: %w", op, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
 		s.log.Error("invalid password", slog.String("err", err.Error()))
 
-		return "", fmt.Errorf("%s : %w", op, constants.ErrInvalidCredentials)
+		return "", fmt.Errorf("%s : %w", op, cerror.ErrInvalidCredentials)
 	}
 
 	app, err := s.appProvider.App(ctx, appID)
 	if err != nil {
-		s.log.Error("error get app", slog.String("err", err.Error()))
-		return "", storage.ErrAppNotFound
+		s.log.Error("cerror get app", slog.String("err", err.Error()))
+		if errors.Is(err, storage.ErrAppNotFound) {
+			return "", cerror.ErrAppNotFound
+		}
+		return "", err
 	}
 
 	token, err = jwtgen.NewJWT(user, app, s.tokenTTL)
 	if err != nil {
-		s.log.Error("error generate token", slog.String("err", err.Error()))
-		return "", fmt.Errorf("error generate token %s: %w", op, err)
+		s.log.Error("cerror generate token", slog.String("err", err.Error()))
+		return "", fmt.Errorf("cerror generate token %s: %w", op, err)
 	}
 
 	log.Info("user login success")
@@ -112,9 +115,9 @@ func (s *Auth) RegisterNewUser(ctx context.Context, login string, password strin
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
 			log.Error("user exists", slog.String("err", err.Error()))
-			return 0, constants.ErrUserExists
+			return 0, cerror.ErrUserExists
 		}
-		return 0, fmt.Errorf("error save user %s: %w", op, err)
+		return 0, fmt.Errorf("cerror save user %s: %w", op, err)
 	}
 
 	log.Info("register user")
@@ -130,10 +133,10 @@ func (s *Auth) CheckIsAdmin(ctx context.Context, userid int32, appid int32) (mod
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.String("err", err.Error()))
-			return res, constants.ErrInvalidCredentials
+			return res, cerror.ErrInvalidCredentials
 		}
-		log.Error("error check is admin", slog.String("err", err.Error()))
-		return res, constants.ErrInternalErr
+		log.Error("check is admin", slog.String("err", err.Error()))
+		return res, cerror.ErrInternalErr
 	}
 	log.Info("check is admin")
 
@@ -144,17 +147,17 @@ func (s *Auth) CreateAdmin(ctx context.Context, login string, lvl int32, key str
 	const op = "auth.CreateAdmin"
 	log := s.log.With(slog.String("op", op), slog.String("login", login), slog.Int("lvl", int(lvl)))
 	if !checkKeyAdmin(key) {
-		return 0, constants.ErrNotRights
+		return 0, cerror.ErrNotRights
 	}
 
 	uid, err := s.admProvider.CreateAdmin(ctx, login, lvl, appID)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
 			log.Error("user not found", slog.String("err", err.Error()))
-			return 0, constants.ErrInvalidCredentials
+			return 0, cerror.ErrInvalidCredentials
 		}
-		log.Error("error createAdmin is admin", slog.String("err", err.Error()))
-		return 0, constants.ErrInternalErr
+		log.Error("cerror createAdmin is admin", slog.String("err", err.Error()))
+		return 0, cerror.ErrInternalErr
 	}
 
 	log.Info(fmt.Sprintf("change root admin %s", login))
@@ -165,19 +168,19 @@ func (s *Auth) DeleteAdmin(ctx context.Context, login string, key string) (res b
 	const op = "auth.DeleteAdmin"
 
 	if !checkKeyAdmin(key) {
-		return false, constants.ErrNotRights
+		return false, cerror.ErrNotRights
 	}
 
 	log := s.log.With(slog.String("op", op), slog.String("login", login))
 
 	uid, err := s.admProvider.DeleteAdmin(ctx, login)
 	if err != nil {
-		log.Error("error DeleteAdmin", slog.String("err", err.Error()))
+		log.Error("cerror DeleteAdmin", slog.String("err", err.Error()))
 
 		if errors.Is(err, storage.ErrUserNotFound) {
-			return false, constants.ErrInvalidCredentials
+			return false, cerror.ErrInvalidCredentials
 		}
-		return false, constants.ErrInternalErr
+		return false, cerror.ErrInternalErr
 	}
 
 	log.Info(fmt.Sprintf("delete admin %s", login))
@@ -188,18 +191,18 @@ func (s *Auth) AddApp(ctx context.Context, name, secret, key string) (userid int
 	const op = "auth.AddApp"
 
 	if !checkKeyAdmin(key) {
-		return 0, constants.ErrNotRights
+		return 0, cerror.ErrNotRights
 	}
 
 	log := s.log.With(slog.String("op", op), slog.String("name", name))
 
 	uid, err := s.admProvider.AddApp(ctx, name, secret)
 	if err != nil {
-		log.Error("error AddApp", slog.String("err", err.Error()))
+		log.Error("cerror AddApp", slog.String("err", err.Error()))
 		if errors.Is(err, storage.ErrAppExists) {
-			return 0, constants.ErrUserExists
+			return 0, cerror.ErrAppExists
 		}
-		return 0, constants.ErrInternalErr
+		return 0, cerror.ErrInternalErr
 	}
 	log.Info(fmt.Sprintf("add app: %s", name))
 

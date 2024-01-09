@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/MorZLE/auth/internal/domain/constants"
+	"github.com/MorZLE/auth/internal/domain/cerror"
 	"github.com/MorZLE/auth/internal/domain/models"
 	"github.com/MorZLE/auth/internal/service/mocks"
 	"github.com/MorZLE/auth/internal/storage"
@@ -66,7 +66,7 @@ func TestAuth_AddApp(t *testing.T) {
 			},
 			mck:        func(s *mocks.AdminProvider) {},
 			wantUserid: 0,
-			wantErr:    constants.ErrNotRights,
+			wantErr:    cerror.ErrNotRights,
 		},
 		{
 			name: "negative_2",
@@ -79,7 +79,7 @@ func TestAuth_AddApp(t *testing.T) {
 				s.On("AddApp", mock.Anything, "qwreqwrqwr", "teqwrst").Return(int32(0), storage.ErrAppExists)
 			},
 			wantUserid: 0,
-			wantErr:    constants.ErrUserExists,
+			wantErr:    cerror.ErrAppExists,
 		},
 		{
 			name: "negative_3",
@@ -92,7 +92,7 @@ func TestAuth_AddApp(t *testing.T) {
 				s.On("AddApp", mock.Anything, "qwreqwrqwr", "teqwrst").Return(int32(0), errors.ErrUnsupported)
 			},
 			wantUserid: 0,
-			wantErr:    constants.ErrInternalErr,
+			wantErr:    cerror.ErrInternalErr,
 		},
 	}
 	for _, tt := range tests {
@@ -106,7 +106,7 @@ func TestAuth_AddApp(t *testing.T) {
 			}
 			gotUserid, err := s.AddApp(context.Background(), tt.args.name, tt.args.secret, tt.args.key)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("AddApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("AddApp() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotUserid != tt.wantUserid {
@@ -171,7 +171,7 @@ func TestAuth_CheckIsAdmin(t *testing.T) {
 					Return(models.Admin{}, storage.ErrUserNotFound)
 			},
 			want:    models.Admin{},
-			wantErr: constants.ErrInvalidCredentials,
+			wantErr: cerror.ErrInvalidCredentials,
 		},
 		{
 			name: "negative_2",
@@ -184,7 +184,7 @@ func TestAuth_CheckIsAdmin(t *testing.T) {
 					Return(models.Admin{}, errors.ErrUnsupported)
 			},
 			want:    models.Admin{},
-			wantErr: constants.ErrInternalErr,
+			wantErr: cerror.ErrInternalErr,
 		},
 	}
 	for _, tt := range tests {
@@ -197,7 +197,7 @@ func TestAuth_CheckIsAdmin(t *testing.T) {
 			}
 			got, err := s.CheckIsAdmin(context.Background(), tt.args.userid, tt.args.appid)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CheckIsAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CheckIsAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
@@ -263,7 +263,7 @@ func TestAuth_CreateAdmin(t *testing.T) {
 				appID: int32(143),
 			},
 			wantUserid: int64(0),
-			wantErr:    constants.ErrInvalidCredentials,
+			wantErr:    cerror.ErrInvalidCredentials,
 		},
 		{
 			name: "negative_2",
@@ -277,7 +277,7 @@ func TestAuth_CreateAdmin(t *testing.T) {
 				appID: int32(143),
 			},
 			wantUserid: int64(0),
-			wantErr:    constants.ErrInternalErr,
+			wantErr:    cerror.ErrInternalErr,
 		},
 		{
 			name: "invalid_key",
@@ -289,7 +289,7 @@ func TestAuth_CreateAdmin(t *testing.T) {
 				appID: int32(143),
 			},
 			wantUserid: int64(0),
-			wantErr:    constants.ErrNotRights,
+			wantErr:    cerror.ErrNotRights,
 		},
 	}
 	for _, tt := range tests {
@@ -302,7 +302,7 @@ func TestAuth_CreateAdmin(t *testing.T) {
 			}
 			gotUserid, err := s.CreateAdmin(context.Background(), tt.args.login, tt.args.lvl, tt.args.key, tt.args.appID)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("CreateAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("CreateAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotUserid != tt.wantUserid {
@@ -359,7 +359,7 @@ func TestAuth_DeleteAdmin(t *testing.T) {
 				key:   "",
 			},
 			wantRes: false,
-			wantErr: constants.ErrNotRights,
+			wantErr: cerror.ErrNotRights,
 		},
 		{
 			name: "negative_1",
@@ -371,7 +371,7 @@ func TestAuth_DeleteAdmin(t *testing.T) {
 				key:   keyAdmin,
 			},
 			wantRes: false,
-			wantErr: constants.ErrInvalidCredentials,
+			wantErr: cerror.ErrInvalidCredentials,
 		},
 		{
 			name: "negative_2",
@@ -383,7 +383,7 @@ func TestAuth_DeleteAdmin(t *testing.T) {
 				key:   keyAdmin,
 			},
 			wantRes: false,
-			wantErr: constants.ErrInternalErr,
+			wantErr: cerror.ErrInternalErr,
 		},
 	}
 	for _, tt := range tests {
@@ -398,7 +398,7 @@ func TestAuth_DeleteAdmin(t *testing.T) {
 
 			gotRes, err := s.DeleteAdmin(context.Background(), tt.args.login, tt.args.key)
 			if !errors.Is(err, tt.wantErr) {
-				t.Errorf("DeleteAdmin() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("DeleteAdmin() cerror = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if gotRes != tt.wantRes {

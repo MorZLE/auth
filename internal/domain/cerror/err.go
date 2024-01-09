@@ -1,4 +1,4 @@
-package constants
+package cerror
 
 import "github.com/pkg/errors"
 
@@ -8,6 +8,7 @@ var (
 )
 
 var (
+	ErrAppNotFound        = errors.New("app not found")
 	ErrUserNotFound       = errors.New("user not found")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user exists")

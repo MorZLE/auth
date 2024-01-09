@@ -13,9 +13,15 @@ type Config struct {
 	StoragePath string        `yaml:"storage_path" env-required:"true"`
 	TokenTTL    time.Duration `yaml:"token_ttl" env-required:"true"`
 	GRPC        GrpcConfig    `yaml:"grpc"`
+	Rest        Rest          `yaml:"rest"`
 }
 
 type GrpcConfig struct {
+	Port    int           `yaml:"port"`
+	Timeout time.Duration `yaml:"timeout"`
+}
+
+type Rest struct {
 	Port    int           `yaml:"port"`
 	Timeout time.Duration `yaml:"timeout"`
 }
@@ -34,12 +40,12 @@ func MustLoadByPath(confPath string) *Config {
 	var cnf Config
 
 	if _, err := os.Stat(confPath); os.IsNotExist(err) {
-		panic(fmt.Sprintf("config file does not exist: %w", err))
+		panic(fmt.Sprintf("config file does not exist: %s", err))
 	}
 
 	err := cleanenv.ReadConfig(confPath, &cnf)
 	if err != nil {
-		panic(fmt.Sprintf("err read config: %w", err))
+		panic(fmt.Sprintf("err read config: %s", err))
 	}
 
 	return &cnf
